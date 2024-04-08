@@ -1,0 +1,184 @@
+---
+title: "HW1"
+author: "Erik Andersen"
+date: "2024-04-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      cahce = TRUE)
+```
+
+
+```{r}
+# Here setup
+here::i_am("HW1/code/HW1.Rmd")
+
+# Load packages
+pacman::p_load(haven, tidyverse, magrittr)
+```
+
+```{r}
+# Load data
+brets_df = read_dta(here::here("HW1", "data", "brets.dta"))
+trets_df = read_dta(here::here("HW1", "data", "trets.dta"))
+```
+
+
+```{r}
+# for convenience define a vector of all the firm ids
+firms = unique(trets_df$permno)
+```
+
+
+Define some helper functions. 
+
+```{r}
+# Function to Calculate SE for each firm
+firm_var = function(df){
+  # Define interator
+  firms = unique(unlist((df["permno"])))
+  
+  lapply(firms, function(x){
+    # Get the abnormal returns in the estimation period for each firm
+    epsilon = df |> 
+      filter(rd <= -61) |> 
+      filter(permno == {x}) |> 
+      select(abnorm) |> 
+      drop_na() |> 
+      as.matrix() # Make a matrix for matrix algebra in next step
+  
+  # Calculate the variance. We want to keep the variances rather than calculate SE because we need to sum these up for the aggregate variance
+  sigma2 = t(epsilon) %*% epsilon / (nrow(epsilon) - 2) 
+  return(sigma2)
+}) |> unlist()
+}
+
+# Now calculate the SE for each firm within the range of interest
+cum_var = function(df, from, to, firm_var){
+    # Define iterator
+    firms = unique(unlist((df["permno"])))
+  
+    var = lapply(firms, function(x){
+      # Calculate the length of the series for each firm
+      N = df |> 
+        filter(permno == {x}) |> 
+        drop_na() |> 
+        nrow()
+      
+      # Make diagonal variance matrix
+      V = diag(firm_var[which(unique(df$permno) == x)], nrow = N)
+      
+      # Create vector of 1's and 0 to indicate the event days. Since the matrix is symmetric, we don't actually have to put the 1's in the middle where they event happens. Its equivalent to just put the same number of 1's at the beginning which I do for simplicity
+      gamma = c(rep(1, length(from:to)), rep(0, N - length(from:to)))
+      
+      # Calculate firm variance within the window
+      firm_cum_var = t(gamma) %*% V %*% gamma
+      
+      return(firm_cum_var)
+  }) |> unlist()
+    # Now calculate variance aggregating over firms
+    agg_var = sum(var) / length(var)^2
+    agg_se = sqrt(agg_var)
+    
+    return(agg_se)
+}
+```
+
+```{r}
+# Calculate the cumulative abnormal returns 
+cumulative_returns = function(df, from, to){
+  # Note: event_window should be a two long vector with the first value the lower bound of the event window and the second value the upper bound
+  # Define iterator
+  firms = unique(unlist((df["permno"])))
+  
+  # Define event window for each firm and get cumulative returns over the window
+  car_firms = sapply(firms, function(x){
+    df |> 
+      # Select firms
+      filter(permno == {x}) |> 
+      # Add a column of 1's and 0's where 1's indicate value is in the event window
+      mutate(event = if_else(rd >= from & rd <= to, 1, 0)) |> 
+      filter(event == 1) |> 
+      select(abnorm) |> 
+      cumsum()
+  }) |> unlist()
+  
+  # Aggregate over firms
+  car = sapply(seq(1, length(from:to)), function(i){
+    # Select returns for each date across all firms
+    date = car_firms[names(car_firms) == paste("abnorm", i, sep = "")]
+      
+    # Aggregate cumulative abnormal returns at each date in the event window
+    sum(date) / length(car_firms)
+  })
+  
+  return(car)
+}
+```
+
+```{r}
+# Calculate the test statistic and return t stat and p value
+test_stat = function(df, from, to){
+  # Calculate firm var
+  firm_var = firm_var(df)
+  
+  # Calculate SE
+  se = cum_var(df, from, to, firm_var)
+  
+  # Calculate cumulative returns. We just need the final one for the test stat
+  car = cumulative_returns(df, from, to)
+  car = car[length(car)]
+  
+  # Calculate test stat which is car/se
+  j = car / se
+  
+  return(j)
+}
+```
+
+
+
+```{r}
+# Estimate mean return model for the target firms
+# Iterate over each firm because we want mean return by firm
+mean_return_target = lapply(firms, function(x){
+  trets_df |>
+    filter(rd <= -61) |>  # Filter to event date. One year before even is -250. Three months before is -250+9*21 = -187 because we assume there are 21 trading days per month
+    filter(permno == {x}) |> 
+    reframe(permno = permno, mean_return = mean(ret, na.rm = T)) |> 
+    unique() # The previous  line give a data frame of identical values we just need one
+}) |> bind_rows()
+
+# Add mean returns back to the data frame
+trets_returns = left_join(trets_df, mean_return_target)
+
+# Calculate abnormal returns
+trets_returns$abnorm = trets_returns$ret - trets_returns$mean_return
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Wrong ftm
+# Estimate CAPM returns model for target firms
+CAPM_returns = lapply(unique(trets_df$permno), function(x){
+  trets_df |> 
+    filter(rd <= -61) |> 
+    filter(permno == {x}) %>%
+    reframe(permno = permno, capm = coef(lm(ret ~ vwretd + -1,.))) |> # We're not using an intercept here because the variables already include the risk free rate
+    unique()
+}) |> bind_rows()
+
+# Add capm returns back to data
+trets_returns = left_join(trets_returns, CAPM_returns)
+```
+
