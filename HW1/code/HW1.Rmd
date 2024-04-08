@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE,
 here::i_am("HW1/code/HW1.Rmd")
 
 # Load packages
-pacman::p_load(haven, tidyverse, magrittr)
+pacman::p_load(haven, tidyverse, magrittr, ggplot2)
 ```
 
 ```{r}
@@ -43,6 +43,7 @@ firm_var = function(df){
   lapply(firms, function(x){
     # Get the abnormal returns in the estimation period for each firm
     epsilon = df |> 
+      # Estimation window is 3 months before 0 date
       filter(rd <= -61) |> 
       filter(permno == {x}) |> 
       select(abnorm) |> 
@@ -78,6 +79,7 @@ cum_var = function(df, from, to, firm_var){
       
       return(firm_cum_var)
   }) |> unlist()
+    
     # Now calculate variance aggregating over firms
     agg_var = sum(var) / length(var)^2
     agg_se = sqrt(agg_var)
@@ -101,6 +103,7 @@ cumulative_returns = function(df, from, to){
       # Add a column of 1's and 0's where 1's indicate value is in the event window
       mutate(event = if_else(rd >= from & rd <= to, 1, 0)) |> 
       filter(event == 1) |> 
+      drop_na() |> 
       select(abnorm) |> 
       cumsum()
   }) |> unlist()
@@ -108,10 +111,13 @@ cumulative_returns = function(df, from, to){
   # Aggregate over firms
   car = sapply(seq(1, length(from:to)), function(i){
     # Select returns for each date across all firms
-    date = car_firms[names(car_firms) == paste("abnorm", i, sep = "")]
+    if(length(from:to) == 1)
+      date = car_firms
+    else 
+      date = car_firms[names(car_firms) == paste("abnorm", i, sep = "")]
       
     # Aggregate cumulative abnormal returns at each date in the event window
-    sum(date) / length(car_firms)
+    sum(date) / length(date)
   })
   
   return(car)
@@ -134,7 +140,33 @@ test_stat = function(df, from, to){
   # Calculate test stat which is car/se
   j = car / se
   
-  return(j)
+  # Calculate p value
+  p = 2*pnorm(-j)
+  
+  return(list(car = car, se = se, t = j, p_value = p))
+}
+```
+
+```{r}
+# Plot the CAR
+plot_CAR = function(df){
+  # CAlculate SE
+  se = cum_var(df, -30,30, firm_var(df))
+  
+  # Calculate cumulative returns
+  ret = cumulative_returns(df, -30, 30)
+  
+  # Make into a dataframe to plot
+  cum = tibble(abnorm = ret, date = -30:30, se = se)
+  
+  cum |> 
+    ggplot(aes(x = date, y = abnorm)) + 
+    geom_point() + 
+    geom_ribbon(aes(ymin = abnorm - 2*se, ymax = abnorm + 2*se), alpha = 0.3) +
+    geom_vline(xintercept = 0, linewidth = 1.5, alpha = 0.5) +
+    scale_x_continuous(breaks = seq(-30,30, by = 10)) +
+    cowplot::theme_cowplot() + 
+    labs(x = "Month Relative to Split", y = "Cumulative Abnormal Return")
 }
 ```
 
