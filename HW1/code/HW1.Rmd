@@ -26,12 +26,6 @@ trets_df = read_dta(here::here("HW1", "data", "trets.dta"))
 ```
 
 
-```{r}
-# for convenience define a vector of all the firm ids
-firms = unique(trets_df$permno)
-```
-
-
 Define some helper functions. 
 
 ```{r}
@@ -106,23 +100,33 @@ cumulative_returns = function(df, from, to){
       drop_na() |> 
       select(abnorm) |> 
       cumsum()
-  }) |> unlist()
+}) 
+  
+  # Remove vector names
+  sapply(1:length(car_firms), function(i){
+    names(car_firms[[i]]) <<- NULL
+  })
+
+  # Unlist
+  car_firms = unlist(car_firms)
+
   
   # Aggregate over firms
   car = sapply(seq(1, length(from:to)), function(i){
     # Select returns for each date across all firms
     if(length(from:to) == 1)
       date = car_firms
-    else 
+    else
       date = car_firms[names(car_firms) == paste("abnorm", i, sep = "")]
-      
+
     # Aggregate cumulative abnormal returns at each date in the event window
     sum(date) / length(date)
   })
-  
+
   return(car)
 }
 ```
+
 
 ```{r}
 # Calculate the test statistic and return t stat and p value
@@ -160,6 +164,7 @@ plot_CAR = function(df){
   cum = tibble(abnorm = ret, date = -30:30, se = se)
   
   cum |> 
+    drop_na() |> 
     ggplot(aes(x = date, y = abnorm)) + 
     geom_point() + 
     geom_ribbon(aes(ymin = abnorm - 2*se, ymax = abnorm + 2*se), alpha = 0.3) +
@@ -170,9 +175,10 @@ plot_CAR = function(df){
 }
 ```
 
-
-
 ```{r}
+# for convenience define a vector of all the firm ids
+firms = unique(trets_df$permno)
+
 # Estimate mean return model for the target firms
 # Iterate over each firm because we want mean return by firm
 mean_return_target = lapply(firms, function(x){
@@ -184,33 +190,42 @@ mean_return_target = lapply(firms, function(x){
 }) |> bind_rows()
 
 # Add mean returns back to the data frame
-trets_returns = left_join(trets_df, mean_return_target)
+trets_mean = left_join(trets_df, mean_return_target)
 
 # Calculate abnormal returns
-trets_returns$abnorm = trets_returns$ret - trets_returns$mean_return
+trets_mean$abnorm = trets_mean$ret - trets_mean$mean_return
 ```
 
-
-
-
-
-
-
-
-
+```{r}
+# Estimate CAPM returns model for target firms
+CAPM_returns = function(df){
+  # Define iterator
+  firms = unique(unlist((df["permno"])))
+  
+  returns = lapply(firms, function(x) {
+    # Calculate beta for each firm
+    ret = df |>
+      filter(rd <= -61) |>
+      filter(permno == {x}) %>%
+      reframe(permno = permno, coef = coef(lm(ret ~ vwretd+ -1, .))) |> # We're not using an intercept here because the variables already include the risk free rate
+      unique() |> 
+      drop_na()
+  }) |> bind_rows()
+  
+  # Merge capm coefficients back
+  df = left_join(df, returns)
+  
+  # Get predictions
+  df = df |> 
+    mutate(capm = vwretd * coef)
+}
+```
 
 ```{r}
-# Wrong ftm
-# Estimate CAPM returns model for target firms
-CAPM_returns = lapply(unique(trets_df$permno), function(x){
-  trets_df |> 
-    filter(rd <= -61) |> 
-    filter(permno == {x}) %>%
-    reframe(permno = permno, capm = coef(lm(ret ~ vwretd + -1,.))) |> # We're not using an intercept here because the variables already include the risk free rate
-    unique()
-}) |> bind_rows()
+# Add capm predictions to data set
+trets_capm = CAPM_returns(trets_df)
 
-# Add capm returns back to data
-trets_returns = left_join(trets_returns, CAPM_returns)
+# Calculate abnormal returns
+trets_capm$abnorm = trets_capm$ret - trets_capm$capm
 ```
 
