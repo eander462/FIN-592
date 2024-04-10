@@ -1,0 +1,112 @@
+---
+title: "HW1_Output"
+author: "Erik Andersen"
+date: "2024-04-10"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      cache = T,
+                      error = F,
+                      message = F)
+```
+
+```{r}
+here::i_am("HW1/code/Analysis.Rmd")
+```
+
+
+```{r}
+# Source all the work from the analysis document
+source(here::here("HW1/code/HW1.R"))
+```
+
+The code for this homework is attached separately.
+
+### Question 1: Short Horizon Target
+
+In this question, we'll run a short-run event study on the firms targeted in mergers.
+
+#### a)
+
+Below is a table of the cumulative abnormal returns for the target firms along with the standard errors, t-stats, and associated p-values.
+
+```{r}
+one_table
+```
+
+#### b)
+
+Here is a plot of the returns over a 30 day window. Note for this and the plot in question 2. I recognize that the standard errors should be calculated at each period, but my function to calculate them is slow enough that calculating it 61 times would have taken between half an hour and an hour, so I was lazy and just used the overall standard error.
+
+```{r}
+grid.arrange(means_plot, capm_plot, ncol = 2)
+```
+
+#### c)
+
+The two models are basically indistinguishable in this case. At the end of the event window, we see the CAPM graph trending down slightly more than the means model because the CAPM can capture whatever trend was happening. The CAPM also has a smaller run up before time 0. These differences are negligible however; the main conclusion is the same either way. We see a huge spike in pries at the time of the merger (or announcement of merger). Clearly there is some fairly large effect on prices for firms being the target of a merger. One possible explanation is that the is asymmetric information that traders are aware of in the market. Another firm being willing to acquire the target firm signals they have some positive information on that firm, and if there is asymmetric information traders could see this as a signal and update their beliefs about the future prospects of the acquired firm. 
+
+### Quesetion 2: Short Horizon Bidders
+
+In this question, we will do the same thing as part 1, but now we will look at the bidding firms. We only estimate using the CAPM model this time because there was hardly any difference between the CAPM and means models so there's no need to run both. 
+
+#### a)
+
+Here are the same statistics reported in 1a for the bidding firms.
+
+```{r}
+two_table
+```
+
+#### b)
+
+Here is the graph of the event window for 30 days around the event.
+
+```{r}
+capm_B_plot
+```
+
+#### c)
+
+We see strikingly different behavior for the bidding firms in the above graph compared to the target firms. Again we see a statistically significant jump at the event date, but it is much smaller this time and negative. Unlike the target firms, this change in prices doesn't last. As we can see in the table, when we hit 5 days around the window, the jump has almost lost all its significance. Based on questions 1 and 2, it seems that firms like to be acquired, but don't like to do the acquiring. 
+
+
+### Question 3: Long Horizon Bidders
+
+In this question we will do the same exercise as in question 2, but look at long horizon predictions to see how our predictions do.
+
+#### a)
+
+The cross-sectional average of the standard errors on the beta estimates is `r beta_se`. We obtain this by taking the average of the standard errors on the CAPM estimates of $\beta$. 
+
+#### b)
+
+Below are the cumulative aggregate returns and their standard errors for three different predictions. I predict the CAPM in the normal way as way as using the coefficient plus or minus one standard error. This allows us to see how much the estimation error affects predictions.
+
+```{r}
+three_table
+```
+
+#### c)
+
+Below is the graph with standard errors calculated in the different way over a 30 day event window. 
+
+```{r}
+long_plot1 + ggtitle("CAPM Model for Bidding Firms Different SE Estimator")
+```
+
+#### d)
+
+Finally, we have the cumulative abnormal returns over the horizon from 2 days before the event to a year afterwards.
+
+```{r}
+long_plot2 + ggtitle("Bidding Firms Different SE Long Time Horizon")
+```
+
+#### e)
+
+The first thing to note is that the standard error is approximately the same over the 30 day window for both estimators. Over the long time horizon, notice that the error from the estimates on $\beta$ is enormous. Underestimating $\beta$ by just one standard error means we see basically no change over the long horizon, and the spread is almost 10 percentage points to $\beta$ plus one standard error. This amount of noise means we can't really learn anything from the event over such a long horizon. 
