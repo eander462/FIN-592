@@ -1,0 +1,59 @@
+---
+title: "HW2"
+author: "Erik Andersen"
+date: "2024-04-18"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      cache = TRUE)
+```
+
+```{r}
+here::i_am("HW2/code/HW2.Rmd")
+
+# Load packages
+pacman::p_load(tidyverse, magrittr)
+```
+
+```{r}
+# Load data
+equity_df = read_csv(here::here("HW2", "data", "equity_returns.csv"))
+tbill_df = read_csv(here::here("HW2", "data", "tbill_returns.csv"))
+
+# Merge into one data set
+returns_df = left_join(equity_df, tbill_df)
+```
+
+#### b)
+
+```{r}
+# Construct dividend price ratio from equity returns data
+# To get there, we will do the following. First, subtracting returns without dividends from returns with dividends gets us current period dividends divided by last period's price. We need dividends divided by current price, which we can get by taking the inverse of returns without dividends plus 1.
+
+# Dividend growth we can construct by multiplying current dividend price by returns without dividends divided by last years dividend price ratio
+
+returns_df = 
+  returns_df |> 
+    mutate(div_price = (vwretd - vwretx) / (1/(vwretx + 1)),
+         div_growth = div_price * (vwretx + 1)/ lag(div_price))
+```
+
+#### c)
+
+```{r}
+# Plot dividend price, dividend returns, stock returns, and risk free returns on the same graph
+
+returns_df |> 
+  drop_na() |> 
+  mutate(across(-c(caldt, div_growth), function(x) x*100)) |> 
+  select(-c(vwretd, vwretx)) |> 
+  pivot_longer(cols = -caldt) |>  # Rearrange the data so it makes a nice legend
+  ggplot(aes(x = caldt, y = value, color = name)) + 
+  geom_line() + 
+  cowplot::theme_cowplot() + 
+  scale_color_brewer(name = "", palette = "Dark2", labels = c("Dividend Growth", "Dividend Price Ratio", "Risk Free Rate", "Stock Returns")) + 
+  labs(y = "Return (%)", x = "")
+```
+
