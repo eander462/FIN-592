@@ -36,8 +36,8 @@ returns_df = left_join(equity_df, tbill_df)
 
 returns_df = 
   returns_df |> 
-    mutate(div_price = (vwretd - vwretx) / (1/(vwretx + 1)),
-         div_growth = div_price * (vwretx + 1)/ lag(div_price))
+    mutate(div_price = (vwretd + 1) /(vwretx + 1) - 1,
+           div_growth = div_price * (vwretx + 1)/ lag(div_price))
 ```
 
 #### c)
@@ -47,13 +47,34 @@ returns_df =
 
 returns_df |> 
   drop_na() |> 
-  mutate(across(-c(caldt, div_growth), function(x) x*100)) |> 
-  select(-c(vwretd, vwretx)) |> 
+  mutate(across(-c(caldt, div_growth), function(x) x*100)) |> # Convert to %s
+  select(-c(vwretx)) |> # Its redundant to plot returns with and without dividends
   pivot_longer(cols = -caldt) |>  # Rearrange the data so it makes a nice legend
   ggplot(aes(x = caldt, y = value, color = name)) + 
   geom_line() + 
   cowplot::theme_cowplot() + 
   scale_color_brewer(name = "", palette = "Dark2", labels = c("Dividend Growth", "Dividend Price Ratio", "Risk Free Rate", "Stock Returns")) + 
-  labs(y = "Return (%)", x = "")
+  labs(y = "Return (%)", x = "", title = "Returns Since 1925", caption = expression(bold("Figure 1: ")~"Plot of dividend price ratio, divident growth, risk free rate, \n and stock returns since 1925. We can almost see the same pattern\n in the dividend price ratio we saw in class, but all my series are much noisier."))
+
+ggsave(here::here("HW2", "plots", "returns.png"))
+```
+
+### Question 2
+
+```{r}
+# 
+returns_df |> 
+  mutate(demean = vwretd + 1, 
+         r1 = demean * lead(demean)-1,
+         r2 = (r1 + 1)*lead(demean,2)-1,
+         r3 = (r2 + 1)*lead(demean,3)-1) %>% 
+lm(r3 ~ div_price,.) |> summary()
+
+cum_returns = function(periods){
+  
+}
+
+
+
 ```
 
