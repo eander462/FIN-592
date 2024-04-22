@@ -25,7 +25,8 @@ tbill_df = read_csv(here::here("HW2", "data", "tbill_returns.csv"))
 # Merge into one data set
 returns_df = left_join(equity_df, tbill_df) |> 
   mutate(date = year(caldt)) |> # Extract the year 
-  select(date, everything(), -caldt)
+  select(date, everything(), -caldt) |> 
+  filter(!is.na(vwretd)) # Remove 1925 because it has no data
 ```
 
 #### b)
@@ -56,7 +57,7 @@ returns_df |>
   geom_line() + 
   cowplot::theme_cowplot() + 
   scale_color_brewer(name = "", palette = "Dark2", labels = c("Dividend Growth", "Dividend Price Ratio", "Risk Free Rate", "Stock Returns")) + 
-  labs(y = "Return (%)", x = "", title = "Returns Since 1925", caption = expression(bold("Figure 1: ")~"Plot of dividend price ratio, divident growth, risk free rate, \n and stock returns since 1925. We can almost see the same pattern\n in the dividend price ratio we saw in class, but all my series are much noisier."))
+  labs(y = "Return (%)", x = "", title = "Returns Since 1926", caption = expression(bold("Figure 1: ")~"Plot of dividend price ratio, divident growth, risk free rate, \n and stock returns since 1925. We can almost see the same pattern\n in the dividend price ratio we saw in class, but all my series are much noisier."))
 
 ggsave(here::here("HW2", "plots", "returns.png"))
 ```
@@ -141,7 +142,7 @@ div_growth_horizons = sapply(paste0("d", 1:10), function(x){
 
 ```
 
-#### b)
+#### c)
 
 ```{r}
 # Calculate the Hansen Hoddrick standard errors
@@ -156,10 +157,23 @@ hansen_hodrick = sapply(paste0("r", 1:10), function(x){
 }) |> unlist()
 ```
 
-
-#### c)
-
 ```{r}
-
+# Calculate non-overlapping standard errors
+# What we're doing in this loop is subsetting the data into chunks that are the length of the return we want to calculate. So for example for the 10 year horizon, we want 10 year chunks starting with the first year. 
+no_overlap = sapply(1:10, function(i){
+  temp = horizons_return_df %>%
+    # This next bit is complicated and dense because it uses non dplyr fuctions so they don;t work in a pipe  line
+    # Starting from the inside, first we find the row number in the dataset. Why its only the date column is because there are no nas and the row_number function returns an NA if there exists an NA anywhere in the row we subtract 1 so they first number is 0
+    # Take the modulo of that for each legth of time. Then select only those rows for which that equals 0
+    slice(which((row_number(horizons_return_df$date) -1) %% i == 0)) %>%
+    lm(paste0("r", i, "~", "div_price"),.) |> 
+    summary() |> 
+    coef()
+  
+  se = temp[2,2]
+  
+  return(tibble(se))
+    
+}) |> unlist()
 ```
 
