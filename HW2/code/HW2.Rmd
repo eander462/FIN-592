@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE,
 here::i_am("HW2/code/HW2.Rmd")
 
 # Load packages
-pacman::p_load(tidyverse, magrittr)
+pacman::p_load(tidyverse, magrittr, sandwich)
 ```
 
 ```{r}
@@ -23,7 +23,9 @@ equity_df = read_csv(here::here("HW2", "data", "equity_returns.csv"))
 tbill_df = read_csv(here::here("HW2", "data", "tbill_returns.csv"))
 
 # Merge into one data set
-returns_df = left_join(equity_df, tbill_df)
+returns_df = left_join(equity_df, tbill_df) |> 
+  mutate(date = year(caldt)) |> # Extract the year 
+  select(date, everything(), -caldt)
 ```
 
 #### b)
@@ -47,10 +49,10 @@ returns_df =
 
 returns_df |> 
   drop_na() |> 
-  mutate(across(-c(caldt, div_growth), function(x) x*100)) |> # Convert to %s
+  mutate(across(-c(date, div_growth), function(x) x*100)) |> # Convert to %s
   select(-c(vwretx)) |> # Its redundant to plot returns with and without dividends
-  pivot_longer(cols = -caldt) |>  # Rearrange the data so it makes a nice legend
-  ggplot(aes(x = caldt, y = value, color = name)) + 
+  pivot_longer(cols = -date) |>  # Rearrange the data so it makes a nice legend
+  ggplot(aes(x = date, y = value, color = name)) + 
   geom_line() + 
   cowplot::theme_cowplot() + 
   scale_color_brewer(name = "", palette = "Dark2", labels = c("Dividend Growth", "Dividend Price Ratio", "Risk Free Rate", "Stock Returns")) + 
@@ -62,19 +64,102 @@ ggsave(here::here("HW2", "plots", "returns.png"))
 ### Question 2
 
 ```{r}
-# 
-returns_df |> 
+# Calculate cumulative returns for every horizon from 1 to 10 years. 
+# I couldn't come up with a good way to do this so I'm doing it manually
+horizons_return_df = returns_df |> 
   mutate(demean = vwretd + 1, 
          r1 = demean * lead(demean)-1,
          r2 = (r1 + 1)*lead(demean,2)-1,
-         r3 = (r2 + 1)*lead(demean,3)-1) %>% 
-lm(r3 ~ div_price,.) |> summary()
+         r3 = (r2 + 1)*lead(demean,3)-1,
+         r4 = (r3 + 1)*lead(demean,4)-1,
+         r5 = (r4 + 1)*lead(demean,5)-1,
+         r6 = (r5 + 1)*lead(demean,6)-1,
+         r7 = (r6 + 1)*lead(demean,7)-1,
+         r8 = (r7 + 1)*lead(demean,8)-1,
+         r9 = (r8 + 1)*lead(demean,9)-1,
+         r10= (r9 + 1)*lead(demean,10)-1) 
 
-cum_returns = function(periods){
+# Calculate the regressions for various return horizons on dividend price ratio
+return_horizons = sapply(paste0("r", 1:10), function(x){
+  temp = horizons_return_df %>%
+    lm(paste(x, "~", "div_price"),.) |> summary()
   
-}
+  # Extract relevant stats
+  ret = tibble(beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
+  
+  return(ret)
+})
+
+# Add excess returns
+horizons_return_df %<>%
+  mutate(rf = t90ret + 1,
+         rf1 = r1 - (rf * lead(rf)-1),
+         rf2 = r2 - (rf1 + 1) * lead(rf,2)-1,
+         rf3 = r3 - (rf2 + 1) * lead(rf,3)-1,
+         rf4 = r4 - (rf3 + 1) * lead(rf,4)-1,
+         rf5 = r5 - (rf4 + 1) * lead(rf,5)-1,
+         rf6 = r6 - (rf5 + 1) * lead(rf,6)-1,
+         rf7 = r7 - (rf6 + 1) * lead(rf,7)-1,
+         rf8 = r8 - (rf7 + 1) * lead(rf,8)-1,
+         rf9 = r9 - (rf8 + 1) * lead(rf,9)-1,
+         rf10=r10 - (rf9 + 1) * lead(rf,10)-1)
+
+# Calculate regressions
+risk_free_horizons = sapply(paste0("rf", 1:10), function(x){
+  temp = horizons_return_df %>%
+    lm(paste(x, "~", "div_price"),.) |> summary()
+  
+  # Extract relevant stats
+  ret = tibble(beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
+  
+  return(ret)
+})
+
+# Add Dividend growth
+horizons_return_df %<>%
+  mutate(d1 = div_growth * lead(div_growth),
+         d2 = d1 * lead(div_growth,2),
+         d3 = d2 * lead(div_growth,3),
+         d4 = d3 * lead(div_growth,4),
+         d5 = d4 * lead(div_growth,5),
+         d6 = d5 * lead(div_growth,6),
+         d7 = d6 * lead(div_growth,7),
+         d8 = d7 * lead(div_growth,8),
+         d9 = d8 * lead(div_growth,9),
+         d10= d9 * lead(div_growth,10))
+
+# Calculate regrssions
+div_growth_horizons = sapply(paste0("d", 1:10), function(x){
+  temp = horizons_return_df %>%
+    lm(paste(x, "~", "div_price"),.) |> summary()
+  
+  # Extract relevant stats
+  ret = tibble(beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
+  
+  return(ret)
+})
+
+```
+
+#### b)
+
+```{r}
+# Calculate the Hansen Hoddrick standard errors
+hansen_hodrick = sapply(paste0("r", 1:10), function(x){
+  temp = horizons_return_df %>%
+    lm(paste(x, "~", "div_price"),.) |> 
+    kernHAC(kernel = 'Truncated', prewhite = F, adjust = T, sandwich = T)
+  
+  se = tibble(se = sqrt(temp[2,2]))
+  
+  return(se)
+}) |> unlist()
+```
 
 
+#### c)
+
+```{r}
 
 ```
 
