@@ -245,3 +245,39 @@ ggsave(here::here("HW2", "plots", "sevel_year_div.png"))
 
 ```
 
+```{r}
+# Construct variance decomposition for the price dividend ratio. First we'll do the part for dividends 
+# 
+var_dividends = sapply(1:nrow(horizons_return_df), function(i){ # Loop over each row
+  # Select each row because we want to calculate the discounted sum of dividend growth for each time period
+  temp = horizons_return_df[i,]
+  sapply(1:10, function(j){ # Question asks for 10 year horizon
+    # We already calculated the dividend growth up to 10 years indexed by d1:d10, so we just discount them and sum all the values up
+    as.numeric(0.96^(j-1) * temp[paste0("d", j)])
+  }) |> sum()
+}) 
+
+# Calculate the relevant statistic
+# We have to take the negative log of dividend price because that's that the table uses
+div_decomp = 100 *cov(var_dividends,
+                 -log(horizons_return_df$div_price),
+                 # Complete.obs gets rid of all the NAs
+                 "complete.obs") / var(-log(horizons_return_df$div_price), na.rm = T)
+```
+
+```{r}
+# Do the same thing for returns
+var_returns = sapply(1:nrow(horizons_return_df), function(i){
+  temp = horizons_return_df[i,]
+  sapply(1:10, function(j){
+    # Only difference is we iterate over returns indexed by r1:r10
+    as.numeric(0.96^(j-1) * temp[paste0("r", j)])
+  }) |> sum()
+})
+
+# Calculate stat
+return_decomp = cov(var_returns,
+                    horizons_return_df$div_price,
+                    "complete.obs") / var(horizons_return_df$div_price, na.rm = T)
+```
+
