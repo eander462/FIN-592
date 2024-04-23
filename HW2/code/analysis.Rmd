@@ -1,0 +1,188 @@
+---
+title: "Homework 2"
+author: "Erik Andersen"
+date: "2024-04-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r}
+here::i_am("HW2/code/analysis.Rmd")
+
+pacman::p_load(gridExtra)
+
+# Source the analysis from the generating code
+source(here::here("HW2", "code", "HW2.R"))
+```
+
+
+## Problem 1
+
+#### a)
+
+The data for this problem set are from Wharton. I use the CRSP value weighted return with and without dividends.
+
+#### b)
+
+In this part, I construct the dividend price ratio $\frac{D_t}{P_t}$ and the dividend growth ration $\frac{D_t}{D_{t-1}}$ using the returns. See the appendix for the code where this happens. Here I will derive how I construct these values using the given returns sequences.\\ \\ The formulas for the two return series I have access to are given below.
+
+```{=tex}
+\begin{align}
+  \text{returns with dividends} = \text{vwretd} &= \frac{P_t + D_t}{P_{t-1}} -1\\
+  \text{returns no dividends} = \text{vwretx} &=  \frac{P_t}{P_{t-1}} -1
+\end{align}
+```
+\\ To construct the dividend price ratio, we will add one to (1) and (2) to remove the annoying constant, then divide (1) by (2). Finally, we subtract 1 from the ratio.
+
+```{=tex}
+\begin{align*}
+  &\frac{\frac{P_t + D_t}{P_{t-1}}}{\frac{P_t}{P_{t-1}}} -1\\
+  =&\frac{P_t + D_t}{P_t} -1\\
+  =&\frac{D_t}{P_t}
+\end{align*} 
+```
+\\ Using this we can now construct the dividend growth rate. To get that, we divide the dividend price ratio at time t+1 by the current period dividend price and multiply by returns with no dividends.
+
+```{=tex}
+\begin{align*}
+  &\frac{\frac{D_{t_1}}{P_{t_1}}}{\frac{D_t}{P_t}} * \frac{P_{t_1}}{P_t}\\
+  =&\frac{D_{t_1}P_t}{D_tP_{t_1}}\frac{P_{t+1}}{P_t}\\
+  &=\frac{D_{t+1}}{D_t}
+\end{align*}
+```
+#### c)
+
+Below is the graph of dividend growth, dividend price ratio, risk free return, and stock returns between 1926 and 2023. I only include the stock returns with dividends because including both is redundant. The noise of the stock returns drowns out everything else, but if you squint we see the characteristic shape of the dividend price ratio we saw in class. 
+
+```{r}
+returns_plot
+```
+
+## Problem 2
+
+In this problem, I will reproduce the following forecasting regressions and see how the standard errors differ under various different specifications.
+
+```{=tex}
+\begin{align*}
+  R_{t,t+j} &= a + b\left(\frac{D}{P}\right)_t + \epsilon_{t+1}\\
+  R_{t, t+j} - R^f_{t,t+j} &= a + b\left(\frac{D}{P}\right)_t + \epsilon_{t+1}\\
+  \Delta D_{t,t+j} &= a + b\left(\frac{D}{P}\right)_t + \epsilon_{t+1}
+\end{align*}
+```
+
+#### a)
+
+Below are the coefficients and $R^2$ values for the regressions with time horizons varying from 1 to 10 years. First I'll look at the first regression on returns. Ignore the far too many digits I don't know how to reduce them. Notice that both $R^2$ and $\beta$ increase as the horizon increases. Both things indicate that over longer horizons the price dividend ratio explains more of the variation in returns, and has a larger impact on returns. 
+
+```{r}
+kbl(
+  return_horizons[c(2, 5),],
+  format = "latex",
+  longtable = F,
+  booktabs = T,
+  caption = "Returns Regression ",
+  digits = 2
+) |>
+  add_header_above(c("","Horizon Lengths" = 10)) |>
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+Next I'll look at the values for the second regression which looks at excess returns above the risk free rate. The pattern is the same here. In the short run, the dividend price ratio does a bad job predicting returns, but as the horizon gets longer it improves. 
+
+```{r}
+kbl(
+  risk_free_horizons[c(2, 5), ],
+  format = "latex",
+  longtable = F,
+  booktabs = T,
+  caption = "Excess Returns Regression ",
+  digits = 2
+) |>
+  add_header_above(c("", "Horizon Lengths" = 10)) |>
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+Finally, we'll look at the final regression which looks at dividend growth. This time the pattern is very different. The $R^2$ decreases basically to 0 as the horizon increases. the coefficients remain around the same size and are very imprecisely estimated. We learn from this that at no horizon is the dividend price ratio predictive of dividend growth which contradicts the old style model of finance where all shifts in returns are driven by changes in dividends. 
+
+```{r}
+kbl(
+  div_growth_horizons[c(2, 5), ],
+  format = "latex",
+  longtable = F,
+  booktabs = T,
+  caption = "Dividend Growth Regression ",
+  digits = 2
+) |>
+  add_header_above(c("", "Horizon Lengths" = 10)) |>
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+#### b)
+
+The coefficients and standard errors are biased by the overlapping data. It is entirely reasonable to expect that there is strong autocorrelation in the time series. OLS is not robust to autocorrelated errors, so both estimates will be biased.
+
+#### c)
+
+Now we will compare three different types of standard errors for the first regression. I will compare the standard OLS standard errors to Hansen-Hodrick errors, and OLS errors if we estimate the regression by omitting the overlapping data. The first table shows the standard errors over the various time horizons. Notice that the standard OLS errors are too small as the horizon gets large because of the autocorrelation. The Hansen-Hodrick errors correct for this and alre larger at every horizon and especially larger as the horizon gets large. The non-overlapping errors increase much faster than either of the other two. This is probably because they run out of data quickly. At the 10 year horizon for example, there are only 10 data points to use (1926-2016 by 10). This is probably not the best way to correct for the bias since it throws away so much data.
+
+```{r}
+standard_errors = rbind(return_horizons[3,], hansen_hodrick, no_overlap)
+rownames(standard_errors) = c("OLS", "Hansen-Hodrick", "No Overlap")
+
+kbl(
+  standard_errors,
+  format = "latex",
+  longtable = F,
+  booktabs = T,
+  caption = "Standard Errors",
+  digits = 2
+) |>
+  add_header_above(c("", "Horizon Lengths" = 10)) |>
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+Next, we'll look a the T-statistics. What we can notice here is that using the standard OLS errors leads to us failing to reject the null of no predictive effect at almost every time horizon. Starting at the three year horizon, the t-stats are above 2, so all of them are significant at the 5% level. However, using the standard errors robust to the autocorrelation, we never reject the null except barly at the longest horizons with the Hansen-Hodrick errors. 
+
+```{r}
+t_stats = rbind(return_horizons[4,], hh_t, no_overlap_t)
+rownames(t_stats) = c("OLS", "Hansen-Hodrick", "No Overlap")
+
+kbl(
+  t_stats,
+  format = "latex",
+  longtable = F,
+  booktabs = T,
+  caption = "T Statistics",
+  digits = 2
+) |>
+  add_header_above(c("", "Horizon Lengths" = 10)) |>
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+## Problem 3
+
+Now that we've run the regressions to see how well the dividend price ratio can predict things and done some statistics, we can visually inspect how well our predictions do by graphing them. First we'll look at our predictions for returns and dividend growth using the one year time horizon. The graphs are below. We see that the dividend price ratio looks like it can do something to predict returns, but nothing at all to predict dividend growth. The line is basically flat. 
+
+```{r}
+grid.arrange(
+one_year_returns,
+one_year_div)
+```
+
+\newpage
+Now we'll look at the same thing but over a 7 year horizon. Now the returns look pretty well predicted by the dividend price ratio. It doesn't capture all of the noise, but it tracks the broad movements. Dividend growth still is not at all predictable and the line is still basically flat. 
+
+```{r}
+grid.arrange(
+seven_year_returns,
+sevel_year_div)
+```
+
+## Problem 4
+
+In this question, I will estimate the variance decomposition of the price dividend ratio. See the code appendix for the calculation. For the dividend part of the variation, I get a value of `r div_decomp` which matches fairly closely the value from table 20.3. It is slightly lower but that could be due to the changing macro environment since the table was created. I get a value of `r return_decomp` for the portion of the variation due to returns which matches the table almost exactly. Matching Cochrane's analysis, I find that variation in returns explains basically all the variation in the price dividend ratio.

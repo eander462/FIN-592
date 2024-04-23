@@ -1,23 +1,10 @@
----
-title: "HW2"
-author: "Erik Andersen"
-date: "2024-04-18"
-output: pdf_document
----
+# Again this is just here so I can source the code. This is written much more clearly in the .Rmd file
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,
-                      cache = TRUE)
-```
-
-```{r}
-here::i_am("HW2/code/HW2.Rmd")
+here::i_am("HW2/code/HW2.R")
 
 # Load packages
 pacman::p_load(tidyverse, magrittr, sandwich, kableExtra)
-```
 
-```{r}
 # Load data
 equity_df = read_csv(here::here("HW2", "data", "equity_returns.csv"))
 tbill_df = read_csv(here::here("HW2", "data", "tbill_returns.csv"))
@@ -27,11 +14,7 @@ returns_df = left_join(equity_df, tbill_df) |>
   mutate(date = year(caldt)) |> # Extract the year 
   select(date, everything(), -caldt) |> 
   filter(!is.na(vwretd)) # Remove 1925 because it has no data
-```
 
-#### b)
-
-```{r}
 # Construct dividend price ratio from equity returns data
 # To get there, we will do the following. First, subtracting returns without dividends from returns with dividends gets us current period dividends divided by last period's price. We need dividends divided by current price, which we can get by taking the inverse of returns without dividends plus 1.
 
@@ -39,14 +22,9 @@ returns_df = left_join(equity_df, tbill_df) |>
 
 returns_df = 
   returns_df |> 
-    mutate(div_price = (vwretd + 1) /(vwretx + 1) - 1,
-           div_growth = div_price / lag(div_price) + vwretx)
-```
+  mutate(div_price = (vwretd + 1) /(vwretx + 1) - 1,
+         div_growth = div_price / lag(div_price) + vwretx)
 
-#### c)
-
-```{r}
-# Plot dividend price, dividend returns, stock returns, and risk free returns on the same graph
 
 returns_plot = returns_df |> 
   drop_na() |> 
@@ -59,12 +37,6 @@ returns_plot = returns_df |>
   scale_color_brewer(name = "", palette = "Dark2", labels = c("Dividend Growth", "Dividend Price Ratio", "Risk Free Rate", "Stock Returns")) + 
   labs(y = "Return (%)", x = "", title = "Returns Since 1926" )
 
-ggsave(here::here("HW2", "plots", "returns.pdf"))
-```
-
-### Question 2
-
-```{r}
 # Calculate cumulative returns for every horizon from 1 to 10 years. 
 # I couldn't come up with a good way to do this so I'm doing it manually
 horizons_return_df = returns_df |> 
@@ -143,15 +115,10 @@ div_growth_horizons = sapply(paste0("d", 1:10), function(x){
   
   return(ret)
 })
+
 colnames(div_growth_horizons) = 1:10
 rownames(div_growth_horizons) = c("Intercept", "Beta", "Standard Error", "T-Stat", "R-Squared")
 
-
-```
-
-#### c)
-
-```{r}
 # Calculate the Hansen Hoddrick standard errors
 hansen_hodrick = sapply(paste0("r", 1:10), function(x){
   temp = horizons_return_df %>%
@@ -165,9 +132,7 @@ hansen_hodrick = sapply(paste0("r", 1:10), function(x){
 
 # Calcualte t-stats
 hh_t = as.numeric(return_horizons[2,])/hansen_hodrick
-```
 
-```{r}
 # Calculate non-overlapping standard errors
 # What we're doing in this loop is subsetting the data into chunks that are the length of the return we want to calculate. So for example for the 10 year horizon, we want 10 year chunks starting with the first year. 
 no_overlap = sapply(1:10, function(i){
@@ -183,16 +148,12 @@ no_overlap = sapply(1:10, function(i){
   se = temp[2,2]
   
   return(tibble(se))
-    
+  
 }) |> unlist()
 
 # Calculate t-stat
 no_overlap_t = as.numeric(return_horizons[2,])/no_overlap
-```
 
-### Question 3
-
-```{r}
 # Predict returns for one year horizon using the returns_horizon object and plot
 one_year_returns = horizons_return_df |> 
   mutate(predicted_returns = as.numeric(return_horizons[2,1]) * div_price) |> 
@@ -205,10 +166,6 @@ one_year_returns = horizons_return_df |>
   ggtitle("One Year Horizon Predicted Versus Actual Returns") +
   cowplot::theme_cowplot()
 
-ggsave(here::here("HW2", "plots", "one_year_returns.png"))
-```
-
-```{r}
 # Same thing but for dividend growth
 # Predict returns for one year horizon using the div_growth_horizons object and plot
 one_year_div = horizons_return_df |> 
@@ -222,10 +179,6 @@ one_year_div = horizons_return_df |>
   ggtitle("One Year Horizon Predicted Versus Actual Dividend Growth") +
   cowplot::theme_cowplot()
 
-ggsave(here::here("HW2", "plots", "one_year_div.png"))
-```
-
-```{r}
 # Now graph the same things but over 7 year horizon
 seven_year_returns = horizons_return_df |>
   mutate(predicted_returns = as.numeric(return_horizons[1, 7]) + as.numeric(return_horizons[2, 7]) * div_price) |>
@@ -238,12 +191,8 @@ seven_year_returns = horizons_return_df |>
   ggtitle("Seven Year Horizon Predicted Versus Actual Returns") + 
   cowplot::theme_cowplot()
 
-ggsave(here::here("HW2", "plots", "seven_year_returns.png"))
-```
-
-```{r}
 # Finally seven year horizon for dividend growth
-seven_year_div = horizons_return_df |> 
+sevel_year_div = horizons_return_df |> 
   mutate(predicted_div_growth = as.numeric(div_growth_horizons[1,7]) +  as.numeric(div_growth_horizons[2,7]) * div_price) |> 
   select(date, d7, predicted_div_growth) |> 
   pivot_longer(cols = -date) |> 
@@ -254,13 +203,8 @@ seven_year_div = horizons_return_df |>
   ggtitle("Seven Year Horizon Predicted Versus Actual Dividend Growth") +
   cowplot::theme_cowplot()
 
-ggsave(here::here("HW2", "plots", "sevel_year_div.png"))
 
-```
 
-### Question 4
-
-```{r}
 # Construct variance decomposition for the price dividend ratio. First we'll do the part for dividends 
 # 
 var_dividends = sapply(1:nrow(horizons_return_df), function(i){ # Loop over each row
@@ -275,12 +219,10 @@ var_dividends = sapply(1:nrow(horizons_return_df), function(i){ # Loop over each
 # Calculate the relevant statistic
 # We have to take the negative log of dividend price because that's that the table uses
 div_decomp = 100 *cov(var_dividends,
-                 -log(horizons_return_df$div_price),
-                 # Complete.obs gets rid of all the NAs
-                 "complete.obs") / var(-log(horizons_return_df$div_price), na.rm = T)
-```
+                      -log(horizons_return_df$div_price),
+                      # Complete.obs gets rid of all the NAs
+                      "complete.obs") / var(-log(horizons_return_df$div_price), na.rm = T)
 
-```{r}
 # Do the same thing for returns
 var_returns = sapply(1:nrow(horizons_return_df), function(i){
   temp = horizons_return_df[i,]
@@ -294,5 +236,3 @@ var_returns = sapply(1:nrow(horizons_return_df), function(i){
 return_decomp = cov(var_returns,
                     horizons_return_df$div_price,
                     "complete.obs") / var(horizons_return_df$div_price, na.rm = T)
-```
-
