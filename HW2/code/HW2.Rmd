@@ -40,7 +40,7 @@ returns_df = left_join(equity_df, tbill_df) |>
 returns_df = 
   returns_df |> 
     mutate(div_price = (vwretd + 1) /(vwretx + 1) - 1,
-           div_growth = div_price * (vwretx + 1)/ lag(div_price))
+           div_growth = div_price / lag(div_price) + vwretx)
 ```
 
 #### c)
@@ -86,7 +86,7 @@ return_horizons = sapply(paste0("r", 1:10), function(x){
     lm(paste(x, "~", "div_price"),.) |> summary()
   
   # Extract relevant stats
-  ret = tibble(beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
+  ret = tibble(intercept = coef(temp)[1,1], beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
   
   return(ret)
 })
@@ -111,7 +111,7 @@ risk_free_horizons = sapply(paste0("rf", 1:10), function(x){
     lm(paste(x, "~", "div_price"),.) |> summary()
   
   # Extract relevant stats
-  ret = tibble(beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
+  ret = tibble(intercept = coef(temp)[1,1], beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
   
   return(ret)
 })
@@ -135,7 +135,7 @@ div_growth_horizons = sapply(paste0("d", 1:10), function(x){
     lm(paste(x, "~", "div_price"),.) |> summary()
   
   # Extract relevant stats
-  ret = tibble(beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
+  ret = tibble(intercept = coef(temp)[1,1], beta = coef(temp)[2,1], se = coef(temp)[2,2], t = coef(temp)[2,3], r2 = temp$r.squared)
   
   return(ret)
 })
@@ -175,5 +175,73 @@ no_overlap = sapply(1:10, function(i){
   return(tibble(se))
     
 }) |> unlist()
+```
+
+### Question 3
+
+```{r}
+# Predict returns for one year horizon using the returns_horizon object and plot
+horizons_return_df |> 
+  mutate(predicted_returns = as.numeric(return_horizons[2,1]) * div_price) |> 
+  select(date, vwretd, predicted_returns) |> 
+  pivot_longer(cols = -date) |> 
+  ggplot(aes(x = date, y = value, color = name)) + 
+  geom_line() + 
+  scale_color_brewer(palette = "Dark2", labels = c("Predicted Returns", "Actual Returns")) +
+  labs(y = "Returns", x = "", color = "") + 
+  ggtitle("One Year Horizon Predicted Versus Actual Returns") +
+  cowplot::theme_cowplot()
+
+ggsave(here::here("HW2", "plots", "one_year_returns.png"))
+```
+
+```{r}
+# Same thing but for dividend growth
+# Predict returns for one year horizon using the div_growth_horizons object and plot
+horizons_return_df |> 
+  mutate(predicted_div_growth = as.numeric(div_growth_horizons[1,1]) +  as.numeric(div_growth_horizons[2,1]) * div_price) |> 
+  select(date, d1, predicted_div_growth) |> 
+  pivot_longer(cols = -date) |> 
+  ggplot(aes(x = date, y = value, color = name)) + 
+  geom_line() + 
+  scale_color_brewer(palette = "Dark2", labels = c("Actual Returns", "Predicted Returns")) +
+  labs(y = "Returns", x = "", color = "") + 
+  ggtitle("One Year Horizon Predicted Versus Actual Dividend Growth") +
+  cowplot::theme_cowplot()
+
+ggsave(here::here("HW2", "plots", "one_year_div.png"))
+```
+
+```{r}
+# Now graph the same things but over 7 year horizon
+horizons_return_df |>
+  mutate(predicted_returns = as.numeric(return_horizons[1, 7]) + as.numeric(return_horizons[2, 7]) * div_price) |>
+  select(date, r7, predicted_returns) |>
+  pivot_longer(cols = -date) |>
+  ggplot(aes(date, value, color = name)) +
+  geom_line() + 
+  scale_color_brewer(palette = "Dark2", labels = c("Predicted Returns", "Actual Returns")) + 
+  labs(y = "Returns", x = "", color = "") + 
+  ggtitle("Seven Year Horizon Predicted Versus Actual Returns") + 
+  cowplot::theme_cowplot()
+
+ggsave(here::here("HW2", "plots", "seven_year_returns.png"))
+```
+
+```{r}
+# Finally seven year horizon for dividend growth
+horizons_return_df |> 
+  mutate(predicted_div_growth = as.numeric(div_growth_horizons[1,7]) +  as.numeric(div_growth_horizons[2,7]) * div_price) |> 
+  select(date, d7, predicted_div_growth) |> 
+  pivot_longer(cols = -date) |> 
+  ggplot(aes(x = date, y = value, color = name)) + 
+  geom_line() + 
+  scale_color_brewer(palette = "Dark2", labels = c("Actual Returns", "Predicted Returns")) +
+  labs(y = "Returns", x = "", color = "") + 
+  ggtitle("Seven Year Horizon Predicted Versus Actual Dividend Growth") +
+  cowplot::theme_cowplot()
+
+ggsave(here::here("HW2", "plots", "sevel_year_div.png"))
+
 ```
 
