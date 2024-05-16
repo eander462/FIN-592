@@ -82,7 +82,6 @@ Below are the coefficients and $R^2$ values for the regressions with time horizo
 ```{r}
 kbl(
   return_horizons[c(2, 5),],
-  format = "latex",
   longtable = F,
   booktabs = T,
   caption = "Returns Regression ",

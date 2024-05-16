@@ -1,0 +1,186 @@
+---
+title: "HW3"
+author: "Erik Andersen"
+header-includes:
+   - \usepackage{bbm}
+date: "2024-05-07"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r}
+here::i_am("HW3/code/HW3.Rmd")
+```
+
+```{r}
+source(here::here("HW3", "code", "HW3.R"))
+```
+
+### Question 1
+
+In this question, we will replicate the predictability VARs from class then replicate the impulse response functions. The equations and their estimates are given below. Besides the estimates for the standard deviations of the errors, the estimates are very close to those estimated in class. I don't know why the estimates are so much smaller for the standard deviations. Interestingly, they are numerically close, but off by two orders of magnitude.
+
+```{=tex}
+\begin{align*}
+  r_{t+1} &= b_r dp_t + e^r_{t+1}\\
+  \Delta d_{t+1} &= b_d dp_t + e^d+{t+1}\\
+  dp_{t+1} &= \Phi dp_t + e^{dp}_{t+1}
+\end{align*}
+```
+```{r}
+kbl(
+  var_table,
+  longtable = F,
+  booktabs = T,
+  caption = ""
+) |> 
+  add_header_above(c(" ", "Estimates" = 2, "Error Standard Deviation\n and Correlation"=3)) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+
+```
+
+Now, I'll plot the impulse response functions following a one unit shock to dividend yield, and a one unit shock to dividends. The first graph below shows the response to a one unit shock to dividend yield. The second shows the same for a shock to dividend growth.
+
+```{r}
+gridExtra::grid.arrange(plot_div_yield, plot_div_growth, name = "Figure 1:")
+```
+
+### Question 2
+
+In this question, we will look at an extension to the Mehra Prescott model of the equity premium puzzle. The transition probabilities matrix is given below.
+
+```{=tex}
+\begin{centering}
+$\begin{bmatrix}
+  \phi & 1-\phi - \eta & \eta \\
+  1-\phi -\eta & \phi & \eta \\
+  \frac{1}{2}x & \frac{1}{2} & 0
+\end{bmatrix}$
+\end{centering}
+```
+#### a)
+
+In this question, I will compute the stationary probabilities, $\bar{q}$ of the transition matrix listed above. For stationarity, the following condition must hold: $\bar{q} = Q' \bar{q}$ where Q is the transition matrix. That corresponds to the following system of four equations. The final equation comes from the condition that the sum of the probabilities must equal 1.
+
+```{=tex}
+\begin{align*}
+  q_1 &= \phi q_1 + (1-\phi-\eta)q_2 + \frac{1}{2}q_3\\
+  q_2 &= (1-\phi-\eta)q_1 + \phi q_2 + \frac{1}{2}q_3\\
+  q_3 &= \eta q_1 + \eta q_2\\
+  1 &= q_1 + q_2 + q_3  
+\end{align*}
+```
+Solving this system of equations gives us the following values for $\bar{q}$.
+
+```{=tex}
+\begin{align*}
+  q_1 &= \frac{1}{2(1 + \eta)} \\
+  q_2 &= \frac{1}{2(1 +\eta)} \\
+  q_3 &= \frac{\eta}{1 + \eta}
+\end{align*}
+```
+#### b)
+
+In this question, I will compute the first and second moments of $x_t$ as well as $E[x_t x_{t-1}]$. X is defined as follows. $x \in {\lambda_1, \lambda_2, \lambda_3}$ where the $\lambda's$ are defined below.
+
+```{=tex}
+\begin{align*}
+  \lambda_1 &= 1 + \mu + \delta \\
+  \lambda_2 &= 1 + \mu - \delta \\
+  \lambda_3 &= \frac{1 + \mu}{2}
+\end{align*}
+```
+The first moment of $x_t$ is given by $x_t \bar{q}$, or the expected value with the expectation relative to the stationary probabilities.
+
+```{=tex}
+\begin{align*}
+  E[x_t] = &\begin{bmatrix}
+    1 + \mu + \delta & 1 + \mu - \delta & \frac{1+\mu}{2}
+  \end{bmatrix}
+  \begin{bmatrix}
+    \frac{1}{2(1+\eta)}\\
+    \frac{1}{2(1+\eta)}\\
+    \frac{\eta}{1 + \eta}
+  \end{bmatrix}\\
+ =&\frac{1}{2(1+\eta)}2(1 + \mu) + \frac{\eta}{1 + \eta}\frac{1+\mu}{2}  \\
+ =&\frac{(2+\eta)(1+\mu)}{2(1+\eta)}
+\end{align*}
+```
+The second moment is calculated as follows.
+
+```{=tex}
+\begin{align*}
+  E[x_t^2] = &\begin{bmatrix}
+    (1 + \mu + \delta)^2 & (1 + \mu - \delta)^2 & (\frac{1+\mu}{2})^2
+  \end{bmatrix}
+  \begin{bmatrix}
+    \frac{1}{2(1+\eta)}\\
+    \frac{1}{2(1+\eta)}\\
+    \frac{\eta}{1 + \eta}
+  \end{bmatrix}\\
+ =&\frac{1}{2(1+\eta)}(2(1+\mu)^2 + 2\delta^2) + \frac{\eta}{1 + \eta}\frac{(1+\mu)^2}{4} 
+\end{align*}0
+```
+Finally, we can calculate $E[x_t x_{t-1}]$ as follows. The inside terms are found by multiplying $x_t$ and $x_{t-1}$ and remembering that $x_t$ is found by multiplying $x_{t-1}$ by the transition matrix Q. I've skipped listing several steps of simplifying for brevity's sake.
+
+```{=tex}
+\begin{align*}
+  E[x_tx_{t-1}] &= \frac{1}{2(1+\eta)}(\lambda_1^2\phi + \lambda_1\lambda_2(1 - \phi - \eta) + \lambda_1\lambda_3\eta + \lambda_2\lambda_1(1-\phi - \eta) + \lambda_2^2\phi + \lambda_2\lambda_3\eta) + \frac{\eta}{1+\eta}(\lambda_3\lambda_1\frac{1}{2} + \lambda_2\lambda_3\frac{1}{2}\\
+  &= \frac{1}{1+\eta}(1+\mu)^2 + \frac{2\phi + \eta - 1}{1 + \eta}\delta^2
+\end{align*}
+```
+#### c)
+
+In this part, I will compute sample values for the moments I calculated above given the following parameter values: $\mu = 0.018$, $\delta = 0.036$, and $\phi = -0.14$. Plugging these into the above equations, I get the following sample moments.
+
+```{=tex}
+\begin{align*}
+  E[x_t] &= 1.018\\
+  E[x_t^2] &= 1.037i\\
+  E[x_tx_{t-1}] &= 1.036
+\end{align*}
+```
+#### d)
+
+See the code appendix below for the program. Table 2 shows the calibrated values for $\mu$, $\delta$, and $\phi$. They match closely to Mehra and Prescott's values.
+
+```{r}
+kbl(
+  moments,
+  longtable = F,
+  booktabs = T,
+  caption = ""
+) |>
+  add_header_above(c("Parameter", "Value")) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+#### e)
+
+See code for the function.
+
+#### f)
+
+Table 3 shows the results of the simulations looping over 0.0001, 0.0002, and 0.0005 for $\eta$, 2 and 10 for $\alpha$, and 0.97, 0.997, and 0.999 for $\beta$. These are reasonable values for each parameter and doing only these values saves the table from being immensely long. Note in particular the returns and risk premium for $\eta = 0.0001$, $\alpha = 10$, and $\beta = -.997$. The risk free rate is about 3%, the expected return is about 10%, so the risk premium is 7%. All of these are inline with stylized facts about returns we see.
+
+```{r}
+kbl(
+  sim,
+  longtable = F,
+  booktabs = T,
+  caption = ""
+) |>
+  add_header_above(c("Parameters"=6)) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+#### g)
+
+I don't think it fully solves the equity premium puzzle. We can get numbers close to the ones we observe, but it still requires a very high risk aversion level of 10. The values are also very sensitive to $\eta$ which is the probability of collapse. Taking the same $\alpha$ and $\beta$ that generate the numbers we observe, if we double $\eta$ to 0.0002, all of sudden we require a negative risk free rate. That is unrealistic and its not a good feature of a model to be that sensitive to parameter values.

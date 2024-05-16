@@ -1,5 +1,5 @@
 ---
-title: "HW2"
+title: "Code Appendix"
 author: "Erik Andersen"
 date: "2024-04-18"
 output: pdf_document
@@ -40,7 +40,7 @@ returns_df = left_join(equity_df, tbill_df) |>
 returns_df = 
   returns_df |> 
     mutate(div_price = (vwretd + 1) /(vwretx + 1) - 1,
-           div_growth = div_price / lag(div_price) + vwretx)
+           div_growth = div_price / lag(div_price) * (vwretx+1))
 ```
 
 #### c)
@@ -51,12 +51,14 @@ returns_df =
 returns_plot = returns_df |> 
   drop_na() |> 
   mutate(across(-c(date, div_growth), function(x) x*100)) |> # Convert to %s
-  select(-c(vwretx)) |> # Its redundant to plot returns with and without dividends
+  select(date, div_growth) |> # Its redundant to plot returns with and without dividends
   pivot_longer(cols = -date) |>  # Rearrange the data so it makes a nice legend
   ggplot(aes(x = date, y = value, color = name)) + 
   geom_line() + 
   cowplot::theme_cowplot() + 
   scale_color_brewer(name = "", palette = "Dark2", labels = c("Dividend Growth", "Dividend Price Ratio", "Risk Free Rate", "Stock Returns")) + 
+  scale_y_continuous(breaks = seq(0:8)) + 
+  scale_x_continuous(breaks = seq(1925, 2025, 10)) +
   labs(y = "Return (%)", x = "", title = "Returns Since 1926" )
 
 ggsave(here::here("HW2", "plots", "returns.pdf"))

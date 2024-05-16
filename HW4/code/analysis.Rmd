@@ -1,0 +1,167 @@
+---
+title: "HW4"
+author: "Erik Andersen"
+date: "2024-05-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
+```{r}
+pacman::p_load(kableExtra)
+
+source(here::here("HW4", "code", "HW4.R"))
+```
+
+
+### Question 1
+
+In this question, I'll calculate the unconditional CAPM using data from CRSP.
+
+#### a)
+
+First I'll run the time series regression for each firm to get its market $\beta$. There's way to many to show so see the code appendix.
+
+#### b)
+
+Now I'll calculate the cross sectional regression. The results are shown in table 1 below.
+
+```{r}
+table1 = broom::tidy(reg_cross_1) |> 
+  select(term, estimate, statistic) |> 
+  mutate(r2 = summary(reg_cross_1)$r.squared)
+colnames(table1) = c("Term", "Estimate", "T-Stat", "R-Squared")
+
+kbl(
+  table1,
+  caption = ""
+) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+#### c) 
+
+Below is the scatter-plot of the cross sectional regression for the unconditional CAPM. The market premium estimated from the cross sectional regression is `r coef(reg_cross_1)[2]`. The time series average of the RMRF factor is `r round(time_average,2)`. These are not close in any way at all. We can probably explain this a bit by noticing the $R^2$ is almost 0. There's a lot of variation the cross sectional regression is not explaining about the return. 
+
+```{r}
+unconditional_plot
+```
+
+### Question 2
+
+#### a)
+
+These are the same values calculated above.
+
+#### b)
+
+See the code for forming the portfolios.
+
+#### c)
+
+In this question, I calculate the $\beta$'s for each portfolio in a time series regression. Since there are only 20 portfolios I can actually show them this time. They are in table 2 below.
+
+```{r}
+table2 = portfolio_df |> 
+  group_by(portfolio) |> 
+  summarise(beta = mean(beta)) |> 
+  rename("Portfolio" = portfolio,
+         "Beta" = beta)
+
+kbl(
+  table2,
+  caption = ""
+) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+#### d)
+
+In this question, I calculate the market premium from the cross sectional regression. It is `r reg_cross_2 |> coef() |> nth(2)` compared to `r round(time_average_2,2)` as the time average. Similar to question 1, they are very far apart. The market premium from the cross sectional regression is broadly similar to what we calculated in question 1. It is a bit smaller, but in the same ballpark.
+
+#### e)
+
+Here is the scatter plot of the cross sectional regression using portfolios rather than individual stocks. Table 3 shows the relevant statistics.
+
+```{r}
+table3 = broom::tidy(reg_cross_2) |> 
+  select(term, estimate, statistic) |> 
+  mutate(r2 = summary(reg_cross_1)$r.squared)
+colnames(table3) = c("Term", "Estimate", "T-Stat", "R-Squared")
+
+kbl(
+  table3,
+  caption = ""
+) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+
+```{r}
+portfolio_plot
+```
+
+#### f)
+
+In this question I will run the GRS test on the 20 portfolios. The GRS test produces a test statistic of `r GRS` which has associated p-value of `r p_value`. We strongly reject the null hypothesis that the $\alpha$'s are jointly 0. 
+
+### Question 3
+
+In this question, I will show that industry portfolio $\beta$'s vary widely as Fama French showed.
+
+#### a)
+
+See the code appendix for my calculation of the monthly $\beta$ for each industry by month.
+
+#### b)
+
+Below is a table of the standard errors on the changes in the monthly $\beta$'s for each industry. The value is calculated as below. The standard errors are given in table 4.
+
+\begin{align*}
+  \sigma^2_{Time Series}(\hat{\beta}) = \sigma^2_{True}(\beta) + \sigma^2_{Mean Standard Error}(\hat{\beta})
+\end{align*}
+
+```{r}
+kbl(
+  industry_se_table,
+  caption = ""
+) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+### Question 4
+
+In this question, I will compare the conditional and unconditional CAPM on the industry portfolios.
+
+#### a)
+
+Table 5 shows the $\alpha$'s and $\beta$'s for each industry across the entire time series estimated both unconditionally and unconditionally. The unconditional mean absolute value of the $\alpha$'s is `r mean(abs(industry_betas$Alpha))`, while the conditional mean is `r conditional_alpha_mean`. They are basically identical. 
+
+```{r}
+kbl(
+  industry_betas[1:3],
+  caption = ""
+) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+
+
+#### c)
+
+Table 6 shows the conditional and unconditional alphas for each industry along with their standard errors. The magnitudes of the conditional and unconditional $\alpha$'s are similar but the conditional ones have much bigger standard errors. 
+
+```{r}
+kbl(
+  industry_betas |> 
+    select(-Beta) |> 
+    left_join(industry_conditional_alphas),
+  caption = ""
+) |> 
+  kable_styling(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
