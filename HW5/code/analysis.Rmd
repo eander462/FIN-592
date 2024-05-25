@@ -1,0 +1,44 @@
+---
+title: "Analysis"
+author: "Erik Andersen"
+date: "2024-05-25"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      echo = FALSE)
+```
+
+```{r message=FALSE, warning=FALSE}
+here::i_am("HW5/code/analysis.Rmd")
+
+pacman::p_load(kableExtra)
+```
+
+```{r}
+source(here::here("HW5", "code", "HW5.R"))
+```
+
+### Question 1
+
+In this question, I will replicate the mean return patterns for the Fama-French 25. These are the portfolios formed on size, and book-to-market value weighted. The values table 1 come from running the regression given in equation 1 below. 
+
+\begin{align}
+  R_i - R_f = a_i + b_i(R_M - R_f) + s_iSMB + h_iHML + e_i
+\end{align}
+
+```{r}
+kbl(
+  rbind(a, b, s, h),
+  caption = ""
+) |> 
+  add_header_above(c("Mean Return (% Per Month)"= 6)) |> 
+  kable_classic(latex_options = c("striped", "scale_down", "repeat_header", "hold_position")) |> 
+  pack_rows("a", 1,5) |> 
+  pack_rows("b", 6,10) |> 
+  pack_rows("s", 11,15) |> 
+  pack_rows("h", 16,20)
+```
+
