@@ -112,7 +112,7 @@ There are predictable patterns in the mean returns we see in table 1. Generally,
 
 Now, I'll run the cross sectional regressions using the equation given by (2). I'll run it using only the Fama French assets, and then also include the market excess returns and the risk free asset. The results are given in table 5. 
 
-The $\chi$^2 test only using the ff25 is `r ff25_chi$statistic` which has p-value `r ff25_chi$p.value`. Including the other assets they are `r ff25_extra_chi$statistic` and `r ff25_extra_chi$p.value`. The test statistics are very small which is why the p-values are so high. Thus we fail to reject the null that the $\alpha$'s are jointly 0. 
+The $\chi^2$ test only using the ff25 is `r ff25_chi$statistic` which has p-value `r ff25_chi$p.value`. Including the other assets they are `r ff25_extra_chi$statistic` and `r ff25_extra_chi$p.value`. The test statistics are very small which is why the p-values are so high. Thus we fail to reject the null that the $\alpha$'s are jointly 0. 
 
 This result is wildly different from the time series regression. The $\lambda$'s are much smaller than any of the $\beta$'s. When we don't include the market and risk free rates, the $\lambda$ is negative. We also don't reject the null here of all $\alpha$'s being 0 which we did for the time series. 
 
@@ -151,6 +151,12 @@ gridExtra::grid.arrange(plot_ff_predicted, plot_all_predicted)
 
 ## Question 3
 
+In this question, I will rerun the analyis in question 2 but using equation (3). 
+
+### a)
+
+Table 6 shows the estimates from the regression. Table 7 shows the standard errors of a, and the $R^2$ values. 
+
 \begin{align}
   R_i - R_f = a_i + b_i(R_M - R_f) + s_iSMB + h_iHML + e_i
 \end{align}
@@ -168,3 +174,36 @@ kbl(
   pack_rows("h", 16, 20)
 ```
 
+```{r}
+kbl(
+  rbind(a_se, R2),
+  caption = ""
+) |> 
+  kable_classic(latex_options = c("striped", "scale_down", "repeat_header", "hold_position")) |> 
+  pack_rows("t(a)", 1, 5) |> 
+  pack_rows("R2", 6,10)
+```
+
+### b)
+
+Fama and French's patterns do hold up in the longer sample. First we can notice that there is still no spread in the $\beta$'s. The other two factors move in the same way they do in the Fama French paper. The $R^2$'s are similarly high. And finally there are several high t-statistics on the a's.
+
+### c)
+
+The GRS test for the three factor portfolio is `r GRS_3f` which has a p-value of `r GRS_3f_p_value`. The $\chi^2$ statistic is `r chi_3f` which has a p-value of `r chi_3f_p`. The mean absolute value of the $\alpha$'s is `r mean_abs_alpha_3f`.
+
+\newpage
+
+### d)
+
+Below is a plot of the predicted vs the actual returns. As before, the blue line is the 45 degree line, the red points are the market returns, and the green point is the risk free asset.
+
+```{r}
+plot_predicted_3f
+```
+
+### e)
+
+Finally, I will compare the two models. The first thing to note is that both models are "rejected" by the GRS and $\chi^2$ tests. We easily reject the null that the $\alpha$'s are jointly 0. However, the 3 factor model has much smaller $\alpha$'s. The mean absolute $\alpha$ is `r mean_abs_alpha_3f` versus `r mean_abs_alpha` for the CAPM. So the pricing error is halved.
+
+This tells us that reducing the testing of models to a single test statistic is overly simplistic. Despite having similar test statistics, the 3F model clearly explains more of the variation here. The graphs show it is a much better fit. As discussed in class, the 3 factor model shrinks the $\alpha$'s but also shrinks the variance-covariance matrix. These shrinking simultaneously means we end up with a similar test statistic because the smaller $\alpha$'s are measured better. 

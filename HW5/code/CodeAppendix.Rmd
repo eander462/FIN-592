@@ -1,3 +1,15 @@
+---
+title: "Code Appendix"
+author: "Erik Andersen"
+date: "2024-05-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
 here::i_am("HW5/code/HW5.R")
 
 # Load packages
@@ -461,3 +473,6 @@ plot_predicted_3f = returns_df |>
   labs(x = "Actual Return", y = "Predicted Returns", title = "Expected vs Actual Returns Using 3 Factors")
 
 ggsave(here::here("HW5", "plots", "expected_3f.pdf"))
+
+```
+
