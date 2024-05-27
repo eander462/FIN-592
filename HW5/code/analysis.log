@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.3.23)  24 MAY 2024 23:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.3.23)  26 MAY 2024 20:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -629,57 +629,99 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 9
-0.
-(/usr/local/texlive/2024/texmf-dist/tex/latex/lm/t1lmtt.fd
-File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
-95.
-(/usr/local/texlive/2024/texmf-dist/tex/latex/lm/ts1lmtt.fd
-File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 125.
+(Font)              <10> on input line 118.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 125.
+(Font)              <7> on input line 118.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 125.
+(Font)              <5> on input line 118.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<analysis_files/figure-latex/unnamed-chunk-7-1.pdf, id=4, 457.71pt x 310.15875p
+t>
+File: analysis_files/figure-latex/unnamed-chunk-7-1.pdf Graphic file (type pdf)
+
+<use analysis_files/figure-latex/unnamed-chunk-7-1.pdf>
+Package pdftex.def Info: analysis_files/figure-latex/unnamed-chunk-7-1.pdf  use
+d on input line 232.
+(pdftex.def)             Requested size: 457.7089pt x 310.15799pt.
 [1
 
 {/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/loc
 al/texlive/2024/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/local/texlive/202
-4/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2024/texmf-dist/
-fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2024/texmf-dist/fonts/enc/
-dvips/lm/lm-mathsy.enc}{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/lm/l
-m-rm.enc}] [2] (./analysis.aux)
+4/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2024/texmf-di
+st/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/2024/texmf-dist/fonts/enc/d
+vips/lm/lm-mathsy.enc}] [2]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[3 <./analysis_files/figure-latex/unnamed-chunk-7-1.pdf>]
+<analysis_files/figure-latex/unnamed-chunk-9-1.pdf, id=58, 457.71pt x 310.15875
+pt>
+File: analysis_files/figure-latex/unnamed-chunk-9-1.pdf Graphic file (type pdf)
+
+<use analysis_files/figure-latex/unnamed-chunk-9-1.pdf>
+Package pdftex.def Info: analysis_files/figure-latex/unnamed-chunk-9-1.pdf  use
+d on input line 297.
+(pdftex.def)             Requested size: 457.7089pt x 310.15799pt.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 3
+08.
+(/usr/local/texlive/2024/texmf-dist/tex/latex/lm/t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
+313.
+(/usr/local/texlive/2024/texmf-dist/tex/latex/lm/ts1lmtt.fd
+File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+<analysis_files/figure-latex/unnamed-chunk-10-1.pdf, id=59, 463.7325pt x 310.15
+875pt>
+File: analysis_files/figure-latex/unnamed-chunk-10-1.pdf Graphic file (type pdf
+)
+<use analysis_files/figure-latex/unnamed-chunk-10-1.pdf>
+Package pdftex.def Info: analysis_files/figure-latex/unnamed-chunk-10-1.pdf  us
+ed on input line 315.
+(pdftex.def)             Requested size: 463.73135pt x 310.15799pt.
+[4{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc} <./analysi
+s_files/figure-latex/unnamed-chunk-9-1.pdf>]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[5 <./analysis_files/figure-latex/unnamed-chunk-10-1.pdf>] [6] (./analysis.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 14989 strings out of 474116
- 235032 string characters out of 5743682
- 1947187 words of memory out of 5000000
- 37032 multiletter control sequences out of 15000+600000
- 597613 words of font info for 96 fonts, out of 8000000 for 9000
+ 15093 strings out of 474116
+ 237108 string characters out of 5743682
+ 1957187 words of memory out of 5000000
+ 37080 multiletter control sequences out of 15000+600000
+ 601989 words of font info for 113 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 83i,10n,93p,1005b,449s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 83i,10n,93p,1005b,451s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
-cal/texlive/2024/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texliv
-e/2024/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></usr/local/texlive/2024/texm
-f-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2024/texmf-dist/font
-s/type1/public/lm/lmr12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/pub
-lic/lm/lmr17.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmsy
-10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on analysis.pdf (2 pages, 149123 bytes).
+cal/texlive/2024/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
+e/2024/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texlive/2024/tex
+mf-dist/fonts/type1/public/lm/lmmi7.pfb></usr/local/texlive/2024/texmf-dist/fon
+ts/type1/public/lm/lmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/pu
+blic/lm/lmr12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr
+17.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmr7.pfb></usr
+/local/texlive/2024/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/tex
+live/2024/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></usr/local/texlive/2024/t
+exmf-dist/fonts/type1/public/lm/lmtt10.pfb>
+Output written on analysis.pdf (6 pages, 1314491 bytes).
 PDF statistics:
- 75 PDF objects out of 1000 (max. 8388607)
- 52 compressed objects within 1 object stream
- 6 named destinations out of 1000 (max. 500000)
- 20489 words of extra memory for PDF output out of 20736 (max. 10000000)
+ 185 PDF objects out of 1000 (max. 8388607)
+ 142 compressed objects within 2 object streams
+ 29 named destinations out of 1000 (max. 500000)
+ 22608 words of extra memory for PDF output out of 24883 (max. 10000000)
 

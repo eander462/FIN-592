@@ -17,13 +17,139 @@ here::i_am("HW5/code/analysis.Rmd")
 pacman::p_load(kableExtra)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 source(here::here("HW5", "code", "HW5.R"))
 ```
 
-### Question 1
+## Question 1
 
-In this question, I will replicate the mean return patterns for the Fama-French 25. These are the portfolios formed on size, and book-to-market value weighted. The values table 1 come from running the regression given in equation 1 below. 
+In this question, I will replicate the mean return patterns for the Fama-French 25. These are the portfolios formed on size, and book-to-market value weighted. The values are given in table 1 (This table didn't round for some reason I don't know why). 
+
+```{r}
+kbl(
+  mean_returns,
+  caption = "",
+  digits = 4
+) |> 
+  add_header_above(c("Mean Return (% Per Month)"= 6)) |> 
+  kable_classic(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+
+## Question 2
+
+In this question, we will see if the Fama, French finding that market $\beta$'s are approximately 1 holds up when we only include the market risk premium as a risk factor in the estimating regrssion.
+
+### a)
+
+To do that we will run the regression shown in equation (1) below. The $\alpha$'s, $\beta$'s, and their requisite t-statistics are shown in table 2. 
+
+\begin{align}
+  R^e_{i,t} = \alpha_i + \beta_i RmRf_t + \epsilon_{i,t}
+\end{align}
+
+```{r}
+kbl(
+  rbind(cbind(alpha,alpha_t_stat), cbind(beta, beta_t_stat)),
+  caption = ""
+) |> 
+  add_header_above(c("Estimate" = 6, "T-Statistic" = 5)) |> 
+  kable_classic(latex_options = c("striped", "scale_down", "repeat_header", "hold_position")) |> 
+  pack_rows("Alpha", 1, 5) |> 
+  pack_rows("Beta", 6, 10)
+```
+
+
+
+### b)
+
+#### i.
+
+The GRS test gives a test statistic of `r GRS_1f` which has a p-value of `r GRS_1f_p_value`. It is highly significant. The critical values it would need to achieve for 1, 5, and 10 percent significance are reported in table 3. 
+
+```{r}
+kbl(
+  f_crits,
+  caption = ""
+) |> 
+  add_header_above(c("Critical Values" = 3)) |> 
+  kable_classic(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+The $\chi$^2 test gives a value of `r t*first*second` which has a p-value of `r 1 - pchisq(t*first*second, N)`. Table 4 reports reports the same critical values but for the chi-squared test as above. 
+
+Both tests strongly reject the null of the $alpha$'s being jointly 0. 
+
+```{r}
+kbl(
+  chi_crits,
+  caption = ""
+) |> 
+  add_header_above(c("Critical Values" = 3)) |> 
+  kable_classic(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+
+#### ii.
+
+The mean absolute value of the $\alpha$'s is `r mean_abs_alpha`.
+
+#### iii.
+
+Below is the plot of actual versus predicted returns. The blue line is the 45 degree line. The red points on the line are the market excess returns, and the green dot is the riks free rate.
+
+```{r}
+plot_1f
+```
+
+### c)
+
+The CAPM does not work well on these portfolios. The null hypothesis of the $\alpha$'s being jointly 0 is strongly rejected by both tests. Individually, most of the $\alpha$'s also have large t-statistics. Statistically, the $\alpha$'s definitely matter. The mean absolute $\alpha$ is `r mean_abs_alpha`. This is fairly large I think. It is a fifth of the market $\beta$ which seems like it matters economically. 
+
+There are predictable patterns in the mean returns we see in table 1. Generally, small firms have bigger returns that large firms, and high book to market firms have bigger returns than low book to market firms. This pattern seems to vaguely match the $\beta$'s in table 2. The largest $\beta$'s are the smaller firms with lower book to market ratios which were also the firms with larger mean returns.  
+
+### d)
+
+Now, I'll run the cross sectional regressions using the equation given by (2). I'll run it using only the Fama French assets, and then also include the market excess returns and the risk free asset. The results are given in table 5. 
+
+The $\chi$^2 test only using the ff25 is `r ff25_chi$statistic` which has p-value `r ff25_chi$p.value`. Including the other assets they are `r ff25_extra_chi$statistic` and `r ff25_extra_chi$p.value`. The test statistics are very small which is why the p-values are so high. Thus we fail to reject the null that the $\alpha$'s are jointly 0. 
+
+This result is wildly different from the time series regression. The $\lambda$'s are much smaller than any of the $\beta$'s. When we don't include the market and risk free rates, the $\lambda$ is negative. We also don't reject the null here of all $\alpha$'s being 0 which we did for the time series. 
+
+\begin{align}
+  E[R^e_i] = \gamma + \beta_i \lambda + \alpha_i
+\end{align}
+
+```{r}
+kbl(
+  cross_table,
+  caption = ""
+) |> 
+  kable_classic(latex_options = c("striped", "scale_down", "repeat_header", "hold_position"))
+```
+
+
+### e)
+
+#### i. 
+
+Below is the graph showing the relationship between $\beta$'s and expected excess returns for the test assets. The blue line is the relationship not including the market and risk free assets. The red line includes those. We can see they are substantially different. 
+
+```{r}
+plot_ff25
+```
+
+#### ii.
+
+Below is a plot of predicted versus actual returns for the test assets. The top plot uses the regression with only the test assets. The bottom uses the regression that uses the the market and risk free assets to make the predictions. It looks like using the whole sample leads to a better fit. The bottom graph has the points more clustered around the 45 degree line. 
+
+```{r}
+gridExtra::grid.arrange(plot_ff_predicted, plot_all_predicted)
+```
+
+
+
+## Question 3
 
 \begin{align}
   R_i - R_f = a_i + b_i(R_M - R_f) + s_iSMB + h_iHML + e_i
@@ -36,9 +162,9 @@ kbl(
 ) |> 
   add_header_above(c("Mean Return (% Per Month)"= 6)) |> 
   kable_classic(latex_options = c("striped", "scale_down", "repeat_header", "hold_position")) |> 
-  pack_rows("a", 1,5) |> 
-  pack_rows("b", 6,10) |> 
-  pack_rows("s", 11,15) |> 
-  pack_rows("h", 16,20)
+  pack_rows("a", 1, 5) |> 
+  pack_rows("b", 6, 10) |> 
+  pack_rows("s", 11, 15) |> 
+  pack_rows("h", 16, 20)
 ```
 
